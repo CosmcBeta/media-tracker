@@ -1,13 +1,30 @@
+pub mod api;
+pub mod db;
+pub mod models;
+pub mod state;
+
 use axum::{Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::get};
+use dotenvy::dotenv;
 use serde::Serialize;
-use std::{collections::HashMap, sync::{Arc, RwLock}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 use uuid::Uuid;
 
-mod db;
-mod models;
+use crate::state::AppState;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+
+    let pool = db::connect(&database_url).await;
+
+    let state = AppState { db: pool };
+
     let db = Db::default();
 
     // build our application with a single route
@@ -30,8 +47,7 @@ async fn items_index(State(db): State<Db>) -> impl IntoResponse {
     Json(items)
 }
 
-async fn items_create(State(db): State<Db>) -> impl IntoResponse
-{
+async fn items_create(State(db): State<Db>) -> impl IntoResponse {
     let item = Item {
         id: Uuid::new_v4(),
         text: "Hey man".to_string(),
