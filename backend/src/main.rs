@@ -3,6 +3,9 @@ use serde::Serialize;
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 use uuid::Uuid;
 
+mod db;
+mod models;
+
 #[tokio::main]
 async fn main() {
     let db = Db::default();
@@ -67,8 +70,8 @@ struct Item {
     text: String,
 }
 
-#[derive(Debug, Serialize, Clone)]
-struct List {
-    id: Uuid,
-    items: Vec<Item>,
-}
+// #[derive(Debug, Serialize, Clone)]
+// struct List {
+//     id: Uuid,
+//     items: Vec<Item>,
+// }
