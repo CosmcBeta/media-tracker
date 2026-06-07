@@ -4,4 +4,3 @@ This is a simple media tracker that you can track what shows, movies, books, and
 
 todo:
 add a way that the progress is locked based on what the media type is. like books are locked to pages
-add a way to log a progress for a past time

@@ -224,10 +224,10 @@ Axum's shared state will be an `Arc<AppState>` containing the database pool and 
 ## Implementation Phases
 
 ### Phase 1 — Core Backend
-- [ ] Project setup: workspace, `axum`, `sqlx`, `tokio`
-- [ ] SQLite schema + migrations with `sqlx migrate`
-- [ ] Basic CRUD for items and lists
-- [ ] Serde models and JSON API responses
+- [x] Project setup: workspace, `axum`, `sqlx`, `tokio`
+- [x] SQLite schema + migrations with `sqlx migrate`
+- [x] Basic CRUD for items and lists
+- [x] Serde models and JSON API responses
 - [ ] `AppError` → HTTP response mapping
 - [ ] Basic integration tests
 
