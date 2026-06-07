@@ -5,10 +5,11 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
-use sqlx::{Arguments, AssertSqlSafe, query, sqlite::SqliteArguments};
+use sqlx::{Arguments, AssertSqlSafe, SqlitePool, query, sqlite::SqliteArguments};
 use uuid::Uuid;
 
 use crate::{
+    error::AppError,
     models::{
         item::{Item, MediaType},
         list::{AddItemToList, CreateList, List, UpdateList},
@@ -16,7 +17,7 @@ use crate::{
     state::AppState,
 };
 
-pub async fn get_lists(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn get_lists(State(state): State<AppState>) -> Result<impl IntoResponse, AppError> {
     let lists = sqlx::query_as!(
         List,
         r#"SELECT
@@ -28,16 +29,15 @@ pub async fn get_lists(State(state): State<AppState>) -> impl IntoResponse {
         FROM lists"#
     )
     .fetch_all(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    Json(lists)
+    Ok(Json(lists))
 }
 
 pub async fn create_list(
     State(state): State<AppState>,
     Json(input): Json<CreateList>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let list = List {
         id: Uuid::new_v4(),
         name: input.name,
@@ -56,61 +56,67 @@ pub async fn create_list(
         list.updated_at.to_rfc3339()
     )
     .execute(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    (StatusCode::CREATED, Json(list))
+    Ok((StatusCode::CREATED, Json(list)))
 }
 
 pub async fn update_list(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     Json(input): Json<UpdateList>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let mut sets = Vec::new();
     let mut args = SqliteArguments::default();
 
     if let Some(name) = input.name {
         sets.push("name = ?");
-        let _ = args.add(name);
+        args.add(name)?;
     }
 
     if let Some(icon) = input.icon {
         sets.push("icon = ?");
-        let _ = args.add(icon);
+        args.add(icon)?;
     }
 
     if sets.is_empty() {
-        return StatusCode::BAD_REQUEST;
+        return Err(AppError::BadRequest("no arguments given".to_string()));
     }
 
     sets.push("updated_at = ?");
-    let _ = args.add(Utc::now().to_rfc3339());
+    args.add(Utc::now().to_rfc3339())?;
 
     let query = format!("UPDATE lists SET {} WHERE id = ?", sets.join(", "));
-    let _ = args.add(&id);
+    args.add(&id)?;
 
     sqlx::query_with(AssertSqlSafe(query), args)
         .execute(&state.db)
-        .await
-        .unwrap();
+        .await?;
 
-    StatusCode::OK
+    let list = get_list_by_id(&state.db, &id).await?;
+
+    Ok(Json(list))
 }
 
-pub async fn delete_list(Path(id): Path<Uuid>, State(state): State<AppState>) -> impl IntoResponse {
-    let _ = query!("DELETE FROM lists WHERE id = ?", id)
+pub async fn delete_list(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let result = query!("DELETE FROM lists WHERE id = ?", id)
         .execute(&state.db)
-        .await
-        .unwrap();
+        .await?;
 
-    StatusCode::NO_CONTENT
+    if result.rows_affected() == 0 {
+        Err(AppError::NotFound)
+    } else {
+        Ok(StatusCode::NO_CONTENT)
+    }
 }
 
 pub async fn get_list_items(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let items = sqlx::query_as!(
         Item,
         r#"SELECT
@@ -127,17 +133,16 @@ pub async fn get_list_items(
         id
     )
     .fetch_all(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    Json(items)
+    Ok(Json(items))
 }
 
 pub async fn add_item_to_list(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     Json(input): Json<AddItemToList>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     sqlx::query!(
         r#"INSERT INTO list_items (list_id, item_id, added_at, sort_order)
         VALUES (?, ?, ?, ?)"#,
@@ -147,24 +152,47 @@ pub async fn add_item_to_list(
         0
     )
     .execute(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    StatusCode::CREATED
+    Ok(StatusCode::CREATED)
 }
 
 pub async fn delete_item_from_list(
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
-    query!(
+) -> Result<impl IntoResponse, AppError> {
+    let result = query!(
         "DELETE FROM list_items WHERE list_id = ? AND item_id = ?",
         id,
         item_id
     )
     .execute(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    StatusCode::NO_CONTENT
+    if result.rows_affected() == 0 {
+        Err(AppError::NotFound)
+    } else {
+        Ok(StatusCode::NO_CONTENT)
+    }
+}
+
+async fn get_list_by_id(pool: &SqlitePool, id: &Uuid) -> Result<List, AppError> {
+    let list = sqlx::query_as!(
+        List,
+        r#"SELECT
+        id AS "id!: Uuid",
+        name,
+        icon,
+        created_at as "created_at: DateTime<Utc>",
+        updated_at as "updated_at: DateTime<Utc>"
+        FROM lists WHERE id = ?"#,
+        id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    match list {
+        Some(list) => Ok(list),
+        None => Err(AppError::NotFound),
+    }
 }

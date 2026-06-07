@@ -26,5 +26,5 @@ pub struct UpdateList {
 
 #[derive(Debug, Deserialize)]
 pub struct AddItemToList {
-    pub item_id: Uuid
+    pub item_id: Uuid,
 }

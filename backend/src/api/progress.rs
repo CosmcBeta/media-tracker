@@ -9,6 +9,7 @@ use sqlx::query;
 use uuid::Uuid;
 
 use crate::{
+    error::AppError,
     models::progress::{CreateProgress, Progress, ProgressKind},
     state::AppState,
 };
@@ -16,7 +17,7 @@ use crate::{
 pub async fn get_item_progress(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let progresses = sqlx::query_as!(
         Progress,
         r#"SELECT
@@ -30,20 +31,19 @@ pub async fn get_item_progress(
         id
     )
     .fetch_all(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    Json(progresses)
+    Ok(Json(progresses))
 }
 
 pub async fn create_item_progress(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
     Json(input): Json<CreateProgress>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let logged_at = match input.logged_at {
         Some(s) => DateTime::parse_from_rfc3339(&s)
-            .unwrap()
+            .map_err(|e| AppError::ParseError(e.to_string()))?
             .with_timezone(&Utc),
         None => Utc::now(),
     };
@@ -54,7 +54,7 @@ pub async fn create_item_progress(
         kind: input.kind,
         value: input.value,
         note: input.note,
-        logged_at: logged_at,
+        logged_at,
     };
 
     sqlx::query!(
@@ -68,20 +68,22 @@ pub async fn create_item_progress(
         progress.logged_at.to_rfc3339()
     )
     .execute(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    (StatusCode::CREATED, Json(progress))
+    Ok((StatusCode::CREATED, Json(progress)))
 }
 
 pub async fn delete_item_progress(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
-    query!("DELETE FROM progress WHERE id = ?", id)
+) -> Result<impl IntoResponse, AppError> {
+    let result = query!("DELETE FROM progress WHERE id = ?", id)
         .execute(&state.db)
-        .await
-        .unwrap();
+        .await?;
 
-    StatusCode::NO_CONTENT
+    if result.rows_affected() == 0 {
+        Err(AppError::NotFound)
+    } else {
+        Ok(StatusCode::NO_CONTENT)
+    }
 }

@@ -5,15 +5,16 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
-use sqlx::{Arguments, AssertSqlSafe, query, sqlite::SqliteArguments};
+use sqlx::{Arguments, AssertSqlSafe, SqlitePool, query, sqlite::SqliteArguments};
 use uuid::Uuid;
 
 use crate::{
+    error::AppError,
     models::item::{CreateItem, Item, MediaType, UpdateItem},
     state::AppState,
 };
 
-pub async fn get_items(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn get_items(State(state): State<AppState>) -> Result<impl IntoResponse, AppError> {
     let items = sqlx::query_as!(
         Item,
         r#"SELECT
@@ -27,16 +28,15 @@ pub async fn get_items(State(state): State<AppState>) -> impl IntoResponse {
         FROM items"#
     )
     .fetch_all(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    Json(items)
+    Ok(Json(items))
 }
 
 pub async fn create_item(
     State(state): State<AppState>,
     Json(input): Json<CreateItem>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     let item = Item {
         id: Uuid::new_v4(),
         media_type: input.media_type,
@@ -59,13 +59,83 @@ pub async fn create_item(
         item.updated_at.to_rfc3339()
     )
     .execute(&state.db)
-    .await
-    .unwrap();
+    .await?;
 
-    (StatusCode::CREATED, Json(item))
+    Ok((StatusCode::CREATED, Json(item)))
 }
 
-pub async fn get_item(Path(id): Path<Uuid>, State(state): State<AppState>) -> impl IntoResponse {
+pub async fn get_item(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let item = get_item_by_id(&state.db, &id).await?;
+
+    Ok(Json(item))
+}
+
+pub async fn update_item(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    Json(input): Json<UpdateItem>,
+) -> Result<impl IntoResponse, AppError> {
+    let mut sets = Vec::new();
+    let mut args = SqliteArguments::default();
+
+    if let Some(title) = input.title {
+        sets.push("title = ?");
+        args.add(title)?;
+    }
+
+    if let Some(media_type) = input.media_type {
+        sets.push("media_type = ?");
+        args.add(media_type)?;
+    }
+
+    if let Some(external_id) = input.external_id {
+        sets.push("external_id = ?");
+        args.add(external_id)?;
+    }
+
+    if let Some(metadata) = input.metadata {
+        sets.push("metadata = ?");
+        args.add(metadata)?;
+    }
+
+    if sets.is_empty() {
+        return Err(AppError::BadRequest("no arguments given".to_string()));
+    }
+
+    sets.push("updated_at = ?");
+    args.add(Utc::now().to_rfc3339())?;
+
+    let query = format!("UPDATE items SET {} WHERE id = ?", sets.join(", "));
+    args.add(&id)?;
+
+    sqlx::query_with(AssertSqlSafe(query), args)
+        .execute(&state.db)
+        .await?;
+
+    let item = get_item_by_id(&state.db, &id).await?;
+
+    Ok(Json(item))
+}
+
+pub async fn delete_item(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let result = query!("DELETE FROM items WHERE id = ?", id)
+        .execute(&state.db)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        Err(AppError::NotFound)
+    } else {
+        Ok(StatusCode::NO_CONTENT)
+    }
+}
+
+async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppError> {
     let item = sqlx::query_as!(
         Item,
         r#"SELECT
@@ -79,67 +149,11 @@ pub async fn get_item(Path(id): Path<Uuid>, State(state): State<AppState>) -> im
         FROM items WHERE id = ?"#,
         id
     )
-    .fetch_optional(&state.db)
-    .await
-    .unwrap();
+    .fetch_optional(pool)
+    .await?;
 
     match item {
-        Some(item) => (StatusCode::OK, Json(item)).into_response(),
-        None => StatusCode::NOT_FOUND.into_response(),
+        Some(item) => Ok(item),
+        None => Err(AppError::NotFound),
     }
-}
-
-pub async fn update_item(
-    Path(id): Path<Uuid>,
-    State(state): State<AppState>,
-    Json(input): Json<UpdateItem>,
-) -> impl IntoResponse {
-    let mut sets = Vec::new();
-    let mut args = SqliteArguments::default();
-
-    if let Some(title) = input.title {
-        sets.push("title = ?");
-        let _ = args.add(title);
-    }
-
-    if let Some(media_type) = input.media_type {
-        sets.push("media_type = ?");
-        let _ = args.add(media_type);
-    }
-
-    if let Some(external_id) = input.external_id {
-        sets.push("external_id = ?");
-        let _ = args.add(external_id);
-    }
-
-    if let Some(metadata) = input.metadata {
-        sets.push("metadata = ?");
-        let _ = args.add(metadata);
-    }
-
-    if sets.is_empty() {
-        return StatusCode::BAD_REQUEST;
-    }
-
-    sets.push("updated_at = ?");
-    let _ = args.add(Utc::now().to_rfc3339());
-
-    let query = format!("UPDATE items SET {} WHERE id = ?", sets.join(", "));
-    let _ = args.add(&id);
-
-    sqlx::query_with(AssertSqlSafe(query), args)
-        .execute(&state.db)
-        .await
-        .unwrap();
-
-    StatusCode::OK
-}
-
-pub async fn delete_item(Path(id): Path<Uuid>, State(state): State<AppState>) -> impl IntoResponse {
-    query!("DELETE FROM items WHERE id = ?", id)
-        .execute(&state.db)
-        .await
-        .unwrap();
-
-    StatusCode::NO_CONTENT
 }
