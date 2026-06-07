@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n        id AS \"id!: Uuid\",\n        item_id AS \"item_id: Uuid\",\n        kind AS \"kind: ProgressKind\",\n        value,\n        note,\n        logged_at as \"logged_at: DateTime<Utc>\"\n        FROM progress WHERE item_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!: Uuid",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "progress",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "item_id: Uuid",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "progress",
+            "name": "item_id"
+          }
+        }
+      },
+      {
+        "name": "kind: ProgressKind",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "progress",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "name": "value",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "progress",
+            "name": "value"
+          }
+        }
+      },
+      {
+        "name": "note",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "progress",
+            "name": "note"
+          }
+        }
+      },
+      {
+        "name": "logged_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "progress",
+            "name": "logged_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "8e51f09d1cee71ae4f1b4678b62cd8273770aea6779b1e3f9b5a8cb761401e90"
+}

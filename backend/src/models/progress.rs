@@ -7,7 +7,7 @@ use uuid::Uuid;
 pub struct Progress {
     pub id: Uuid,
     pub item_id: Uuid,
-    pub kind: Kind,
+    pub kind: ProgressKind,
     pub value: Option<String>,
     pub note: Option<String>,
     pub logged_at: DateTime<Utc>,
@@ -15,9 +15,17 @@ pub struct Progress {
 
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type)]
 #[sqlx(type_name = "TEXT", rename_all = "lowercase")]
-pub enum Kind {
+pub enum ProgressKind {
     Episode,
     Page,
     Percentage,
     Complete,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateProgress {
+    pub kind: ProgressKind,
+    pub value: Option<String>,
+    pub note: Option<String>,
+    pub logged_at: Option<String>,
 }
