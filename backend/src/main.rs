@@ -14,17 +14,8 @@ use crate::{
     state::AppState,
 };
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
-
-    let pool = db::connect(&database_url).await;
-    let state = AppState { db: pool };
-
-    let app = Router::new()
+fn create_router(state: AppState) -> Router {
+    Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/items", get(item::get_items).post(item::create_item))
         .route(
@@ -51,7 +42,20 @@ async fn main() {
             delete(list::delete_item_from_list),
         )
         .route("/progress/{id}", delete(progress::delete_item_progress))
-        .with_state(state);
+        .with_state(state)
+}
+
+#[tokio::main]
+async fn main() {
+    dotenv().ok();
+
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+
+    let pool = db::connect(&database_url).await;
+    let state = AppState { db: pool };
+
+    let app = create_router(state);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
