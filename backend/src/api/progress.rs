@@ -9,6 +9,7 @@ use sqlx::query;
 use uuid::Uuid;
 
 use crate::{
+    api::item::get_item_by_id,
     error::AppError,
     models::progress::{CreateProgress, Progress, ProgressKind},
     state::AppState,
@@ -18,6 +19,8 @@ pub async fn get_item_progress(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
+    get_item_by_id(&state.db, &id).await?;
+
     let progresses = sqlx::query_as!(
         Progress,
         r#"SELECT
@@ -41,6 +44,8 @@ pub async fn create_item_progress(
     State(state): State<AppState>,
     Json(input): Json<CreateProgress>,
 ) -> Result<impl IntoResponse, AppError> {
+    get_item_by_id(&state.db, &id).await?;
+
     let logged_at = match input.logged_at {
         Some(s) => DateTime::parse_from_rfc3339(&s)
             .map_err(|e| AppError::ParseError(e.to_string()))?

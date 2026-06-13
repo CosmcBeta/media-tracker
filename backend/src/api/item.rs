@@ -135,7 +135,7 @@ pub async fn delete_item(
     }
 }
 
-async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppError> {
+pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppError> {
     let item = sqlx::query_as!(
         Item,
         r#"SELECT

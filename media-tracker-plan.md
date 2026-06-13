@@ -228,8 +228,8 @@ Axum's shared state will be an `Arc<AppState>` containing the database pool and 
 - [x] SQLite schema + migrations with `sqlx migrate`
 - [x] Basic CRUD for items and lists
 - [x] Serde models and JSON API responses
-- [ ] `AppError` → HTTP response mapping
-- [ ] Basic integration tests
+- [x] `AppError` → HTTP response mapping
+- [x] Basic integration tests
 
 **What you learn:** axum routing, sqlx async queries, serde, structured error handling
 

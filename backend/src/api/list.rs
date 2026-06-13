@@ -9,6 +9,7 @@ use sqlx::{Arguments, AssertSqlSafe, SqlitePool, query, sqlite::SqliteArguments}
 use uuid::Uuid;
 
 use crate::{
+    api::item::get_item_by_id,
     error::AppError,
     models::{
         item::{Item, MediaType},
@@ -117,6 +118,8 @@ pub async fn get_list_items(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
+    get_list_by_id(&state.db, &id).await?;
+
     let items = sqlx::query_as!(
         Item,
         r#"SELECT
@@ -143,6 +146,9 @@ pub async fn add_item_to_list(
     State(state): State<AppState>,
     Json(input): Json<AddItemToList>,
 ) -> Result<impl IntoResponse, AppError> {
+    get_list_by_id(&state.db, &id).await?;
+    get_item_by_id(&state.db, &input.item_id).await?;
+
     sqlx::query!(
         r#"INSERT INTO list_items (list_id, item_id, added_at, sort_order)
         VALUES (?, ?, ?, ?)"#,
