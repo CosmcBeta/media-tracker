@@ -18,6 +18,8 @@ pub enum AppError {
     ParseError(String),
     #[error("external API error: {0}")]
     ExternalApi(#[from] reqwest::Error),
+    #[error("item with this external id and media type already exists")]
+    Conflict,
 }
 
 impl IntoResponse for AppError {
@@ -29,6 +31,7 @@ impl IntoResponse for AppError {
             AppError::Encode(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::ParseError(msg) => (StatusCode::BAD_REQUEST, msg),
             AppError::ExternalApi(_) => (StatusCode::BAD_GATEWAY, self.to_string()),
+            AppError::Conflict => (StatusCode::CONFLICT, self.to_string()),
         };
 
         (status, message).into_response()

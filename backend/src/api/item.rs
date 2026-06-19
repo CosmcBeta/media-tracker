@@ -11,7 +11,10 @@ use uuid::Uuid;
 use crate::{
     error::AppError,
     external::tmdb,
-    models::item::{CreateItem, Item, MediaType, SearchParams, UpdateItem},
+    models::{
+        item::{CreateItem, Item, MediaType, SearchParams, UpdateItem},
+        search::SearchCandidate,
+    },
     state::AppState,
 };
 
@@ -42,25 +45,13 @@ pub async fn create_item(
         id: Uuid::new_v4(),
         media_type: input.media_type,
         title: input.title,
-        external_id: None, // none for now until we get external api
+        external_id: None,
         metadata: None,
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
 
-    sqlx::query!(
-        r#"INSERT INTO items (id, media_type, title, external_id, metadata, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)"#,
-        item.id,
-        item.media_type,
-        item.title,
-        item.external_id,
-        item.metadata,
-        item.created_at.to_rfc3339(),
-        item.updated_at.to_rfc3339()
-    )
-    .execute(&state.db)
-    .await?;
+    insert_item(&state.db, &item).await?;
 
     Ok((StatusCode::CREATED, Json(item)))
 }
@@ -163,6 +154,25 @@ pub async fn search_items(
     Ok(Json(results))
 }
 
+pub async fn import_items(
+    State(state): State<AppState>,
+    Json(candidate): Json<SearchCandidate>,
+) -> Result<impl IntoResponse, AppError> {
+    let item = Item {
+        id: Uuid::new_v4(),
+        media_type: candidate.media_type,
+        title: candidate.title,
+        external_id: Some(candidate.external_id.to_string()),
+        metadata: Some(candidate.metadata),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+    };
+
+    insert_item(&state.db, &item).await?;
+
+    Ok((StatusCode::CREATED, Json(item)))
+}
+
 pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppError> {
     let item = sqlx::query_as!(
         Item,
@@ -184,4 +194,22 @@ pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppErr
         Some(item) => Ok(item),
         None => Err(AppError::NotFound),
     }
+}
+
+pub async fn insert_item(pool: &SqlitePool, item: &Item) -> Result<(), AppError> {
+    sqlx::query!(
+        r#"INSERT INTO items (id, media_type, title, external_id, metadata, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)"#,
+        item.id,
+        item.media_type,
+        item.title,
+        item.external_id,
+        item.metadata,
+        item.created_at.to_rfc3339(),
+        item.updated_at.to_rfc3339()
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
 }

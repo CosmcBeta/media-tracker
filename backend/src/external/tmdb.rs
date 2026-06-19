@@ -21,7 +21,7 @@ pub struct TmdbShow {
 
 impl From<TmdbShow> for SearchCandidate {
     fn from(api: TmdbShow) -> Self {
-        let metadata = serde_json::to_string(&api).unwrap();
+        let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
 
         SearchCandidate {
             external_id: api.id,
@@ -76,7 +76,7 @@ pub struct TmdbMovie {
 
 impl From<TmdbMovie> for SearchCandidate {
     fn from(api: TmdbMovie) -> Self {
-        let metadata = serde_json::to_string(&api).unwrap();
+        let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
 
         SearchCandidate {
             external_id: api.id,
