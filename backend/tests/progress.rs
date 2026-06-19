@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::common::setup;
+use common::setup;
 
 #[tokio::test]
 async fn get_item_progress_returns_empty_array_when_none_exist() {
@@ -12,7 +12,7 @@ async fn get_item_progress_returns_empty_array_when_none_exist() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
@@ -28,7 +28,7 @@ async fn get_item_progress_returns_all_progresses() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
@@ -81,7 +81,7 @@ async fn create_item_progress_returns_400_when_invalid_date_provided() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
@@ -100,7 +100,7 @@ async fn create_item_progress_returns_201_with_progress() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
@@ -121,7 +121,7 @@ async fn create_item_progress_returns_422_when_missing_required_fields() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
@@ -151,7 +151,7 @@ async fn delete_item_progress_returns_204() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
@@ -174,7 +174,7 @@ async fn delete_item_progress_is_no_longer_retrievable() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();

@@ -20,7 +20,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/", get(|| async { "Hello, World!" }))
         .route("/items", get(item::get_items).post(item::create_item))
         .route("/items/search", get(item::search_items))
-        .route("/items/import", post(item::import_items))
+        .route("/items/import", post(item::import_item))
         .route(
             "/items/{id}",
             get(item::get_item)

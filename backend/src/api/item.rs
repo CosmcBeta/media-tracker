@@ -154,7 +154,7 @@ pub async fn search_items(
     Ok(Json(results))
 }
 
-pub async fn import_items(
+pub async fn import_item(
     State(state): State<AppState>,
     Json(candidate): Json<SearchCandidate>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -196,8 +196,8 @@ pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppErr
     }
 }
 
-pub async fn insert_item(pool: &SqlitePool, item: &Item) -> Result<(), AppError> {
-    sqlx::query!(
+async fn insert_item(pool: &SqlitePool, item: &Item) -> Result<(), AppError> {
+    let result = sqlx::query!(
         r#"INSERT INTO items (id, media_type, title, external_id, metadata, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)"#,
         item.id,
@@ -209,7 +209,13 @@ pub async fn insert_item(pool: &SqlitePool, item: &Item) -> Result<(), AppError>
         item.updated_at.to_rfc3339()
     )
     .execute(pool)
-    .await?;
+    .await;
 
-    Ok(())
+    match result {
+        Ok(_) => Ok(()),
+        Err(sqlx::Error::Database(db_err)) if db_err.is_unique_violation() => {
+            Err(AppError::Conflict)
+        }
+        Err(e) => Err(AppError::Database(e))
+    }
 }

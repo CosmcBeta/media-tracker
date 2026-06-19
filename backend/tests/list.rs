@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::common::setup;
+use common::setup;
 
 #[tokio::test]
 async fn get_lists_returns_empty_array_when_none_exist() {
@@ -229,14 +229,14 @@ async fn get_list_items_returns_all_items() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid_item_1 = body["id"].as_str().unwrap();
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Movie", "title": "Scary Movie"}))
+        .json(&json!({"media_type": "movie", "title": "Scary Movie"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid_item_2 = body["id"].as_str().unwrap();
@@ -272,7 +272,7 @@ async fn add_item_to_list_returns_404_when_list_not_found() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
     let body: serde_json::Value = response.json();
     let uuid_item = body["id"].as_str().unwrap();
@@ -314,7 +314,7 @@ async fn add_item_to_list_returns_422_with_missing_item_id() {
 
     server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
 
     let response = server
@@ -339,7 +339,7 @@ async fn add_item_to_list_returns_201_when_added() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
 
     let body: serde_json::Value = response.json();
@@ -387,7 +387,7 @@ async fn delete_item_from_list_returns_204() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
 
     let body: serde_json::Value = response.json();
@@ -419,7 +419,7 @@ async fn delete_item_from_list_is_no_longer_on_list() {
 
     let response = server
         .post("/items")
-        .json(&json!({"media_type": "Show", "title": "One Piece"}))
+        .json(&json!({"media_type": "show", "title": "One Piece"}))
         .await;
 
     let body: serde_json::Value = response.json();
