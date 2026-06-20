@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     error::AppError,
-    external::{musicbrainz, tmdb},
+    external::{igdb, musicbrainz, tmdb},
     models::{
         item::{CreateItem, Item, MediaType, SearchParams, UpdateItem},
         search::SearchCandidate,
@@ -152,6 +152,15 @@ pub async fn search_items(
             musicbrainz::search_release_groups(&state.client.client, &params.q).await?
         }
         MediaType::Artist => musicbrainz::search_artists(&state.client.client, &params.q).await?,
+        MediaType::Game => {
+            igdb::search_games(
+                &state.client.client,
+                &state.client.igdb_access_token,
+                &state.client.igdb_client_id,
+                &params.q,
+            )
+            .await?
+        }
         _ => return Err(AppError::BadRequest("unsupported media type".to_string())),
     };
 
@@ -162,12 +171,29 @@ pub async fn import_item(
     State(state): State<AppState>,
     Json(candidate): Json<SearchCandidate>,
 ) -> Result<impl IntoResponse, AppError> {
+    let mut metadata = candidate.metadata;
+    if let MediaType::Game = candidate.media_type {
+        let time_to_complete = igdb::fetch_game_completion_time(
+            &state.client.client,
+            &state.client.igdb_access_token,
+            &state.client.igdb_client_id,
+            &candidate.external_id,
+        )
+        .await?;
+
+        if let Some(ttc) = time_to_complete {
+            let mut metadata_json: serde_json::Value = serde_json::from_str(&metadata)?;
+            metadata_json["time_to_beat"] = serde_json::to_value(&ttc)?;
+            metadata = serde_json::to_string(&metadata_json)?;
+        }
+    }
+
     let item = Item {
         id: Uuid::new_v4(),
         media_type: candidate.media_type,
         title: candidate.title,
         external_id: Some(candidate.external_id),
-        metadata: Some(candidate.metadata),
+        metadata: Some(metadata),
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
