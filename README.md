@@ -6,3 +6,4 @@ todo:
 - add a way that the progress is locked based on what the media type is. like books are locked to pages
 - add a way to check igdb auth automatically when the token expires, allowing the server to be ran forever without constant restarts
 - add books api, figure out which to use first
+- add podcast api

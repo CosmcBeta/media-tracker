@@ -236,12 +236,12 @@ Axum's shared state will be an `Arc<AppState>` containing the database pool and 
 ---
 
 ### Phase 2 — External Metadata
-- [ ] TMDB integration (movies + shows)
-- [ ] MusicBrainz or Spotify integration (albums + artists)
+- [x] TMDB integration (movies + shows)
+- [x] MusicBrainz or Spotify integration (albums + artists)
 - [ ] OpenLibrary integration (books)
-- [ ] IGDB integration (games)
-- [ ] Search endpoint that fans out to relevant APIs based on `media_type`
-- [ ] Metadata caching in SQLite
+- [x] IGDB integration (games)
+- [x] Search endpoint that fans out to relevant APIs based on `media_type`
+- [x] Metadata caching in SQLite
 
 **What you learn:** reqwest, async concurrency with tokio, trait-based dispatch, API key management
 
