@@ -1,8 +1,9 @@
-use reqwest::{Client, header::USER_AGENT};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     error::AppError,
+    external::USER_AGENT,
     models::{item::MediaType, search::SearchCandidate},
 };
 
@@ -30,7 +31,7 @@ impl From<MusicBrainzReleaseGroup> for SearchCandidate {
         SearchCandidate {
             external_id: api.id,
             title: api.title,
-            media_type: MediaType::Show,
+            media_type: MediaType::Album,
             year: api.first_release_date,
             description: None,
             poster_url,
@@ -84,7 +85,7 @@ pub async fn search_release_groups(
 ) -> Result<Vec<SearchCandidate>, AppError> {
     let response = client
         .get("https://musicbrainz.org/ws/2/release-group/")
-        .header(USER_AGENT, "MediaTracker/0.1.0 ( github@mail.rwcmail.com )")
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&[("query", query), ("fmt", "json")])
         .send()
         .await?;
@@ -123,7 +124,7 @@ impl From<MusicBrainzArtist> for SearchCandidate {
         SearchCandidate {
             external_id: api.id,
             title: api.name,
-            media_type: MediaType::Show,
+            media_type: MediaType::Artist,
             year: api.life_span.begin,
             description: None,
             poster_url: None, // will add from either spotify/last.fm
@@ -155,7 +156,7 @@ pub async fn search_artists(
 ) -> Result<Vec<SearchCandidate>, AppError> {
     let response = client
         .get("https://musicbrainz.org/ws/2/artist/")
-        .header(USER_AGENT, "MediaTracker/0.1.0 ( github@mail.rwcmail.com )")
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
         .query(&[("query", query), ("fmt", "json")])
         .send()
         .await?;

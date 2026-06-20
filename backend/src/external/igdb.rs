@@ -53,7 +53,7 @@ impl From<IgdbGame> for SearchCandidate {
         SearchCandidate {
             external_id: api.id.to_string(),
             title: api.name,
-            media_type: MediaType::Show,
+            media_type: MediaType::Game,
             year: DateTime::from_timestamp_secs(api.first_release_date)
                 .map(|dt| dt.format("%Y-%m-%d").to_string()),
             description: Some(api.summary),
