@@ -7,3 +7,5 @@ todo:
 - add a way to check igdb auth automatically when the token expires, allowing the server to be ran forever without constant restarts
 - add books api, figure out which to use first
 - add podcast api
+- update from sqlite to progresql
+- create a docker-compose file to run postgres and sever in docker
