@@ -180,6 +180,27 @@ pub async fn import_item(
     State(state): State<AppState>,
     Json(candidate): Json<SearchCandidate>,
 ) -> Result<impl IntoResponse, AppError> {
+    let item = sqlx::query_as!(
+        Item,
+        r#"SELECT
+        id AS "id!: Uuid",
+        media_type AS "media_type: MediaType",
+        title,
+        external_id,
+        metadata,
+        created_at as "created_at: DateTime<Utc>",
+        updated_at as "updated_at: DateTime<Utc>"
+        FROM items WHERE external_id = ? AND media_type = ?"#,
+        candidate.external_id,
+        candidate.media_type
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(item) = item {
+        return Ok((StatusCode::OK, Json(item)));
+    }
+
     let mut metadata = candidate.metadata;
     if let MediaType::Game = candidate.media_type {
         let time_to_complete = igdb::fetch_game_completion_time(

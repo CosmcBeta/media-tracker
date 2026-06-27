@@ -315,7 +315,7 @@ async fn import_item_returns_201_with_item() {
 }
 
 #[tokio::test]
-async fn import_item_returns_409_with_existing_external_id() {
+async fn import_item_returns_200_with_item_with_existing_external_id() {
     let server = setup().await;
 
     server
@@ -339,20 +339,23 @@ async fn import_item_returns_409_with_existing_external_id() {
         .post(&format!("{}/items/import", common::API))
         .json(&json!({
             "external_id": "37854",
-            "title": "ONE PIECE",
-            "year": "2023-08-31",
+            "title": "One Piece",
+            "year": "1999-10-20",
             "media_type": "show",
-            "description": "With his straw...",
-            "poster_url": "/blWCPEqDGLBuLB9u89CxP9ORQP4.jpg",
-            "metadata": r#"{"id":37854,"name":"ONE PIECE","overview":"With his straw...",
-                "first_air_date":"2023-08-31","poster_path":"/blWCPEqDGLBuLB9u89CxP9ORQP4.jpg",
-                "backdrop_path":"/qD211Hb5XwFxrszzBBe5EUYJerh.jpg","genre_ids":[10759,10765],
-                "origin_country":["US"],"original_language":"en","vote_average":8.125,"vote_count":1794,
-                "popularity":36.544}"#
+            "description": "Years ago...",
+            "poster_url": "/dB4EDhre2dsC2kxYDavyKWqLQwi.jpg",
+            "metadata": r#"{"id":37854,"name":"One Piece","overview":"Years ago...",
+                "first_air_date":"1999-10-20","poster_path":"/dB4EDhre2dsC2kxYDavyKWqLQwi.jpg",
+                "backdrop_path":"/2rmK7mnchw9Xr3XdiTFSxTTLXqv.jpg","genre_ids":[10759,35,16],
+                "origin_country":["JP"],"original_language":"ja","vote_average":8.738,"vote_count":5355,
+                "popularity":43.6558}"#
         }))
         .await;
+    let body: serde_json::Value = response.json();
 
-    response.assert_status_conflict();
+    response.assert_status_ok();
+    assert_eq!(body["media_type"], "show");
+    assert_eq!(body["title"], "One Piece");
 }
 
 #[tokio::test]
