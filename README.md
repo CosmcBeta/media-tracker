@@ -12,3 +12,4 @@ todo:
 - update from sqlite to progresql
 - create a docker-compose file to run postgres and sever in docker
 - change the lists to instead of having a logo it shows the most recent item added to that list
+- add users
