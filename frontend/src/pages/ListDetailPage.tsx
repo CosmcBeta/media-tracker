@@ -46,7 +46,7 @@ function ListDetailContent({ listId }: { listId: string }) {
 
 			{/*item grid*/}
 
-			<ItemGrid items={items} />
+			<ItemGrid items={items} listId={listId} />
 		</div>
 	);
 }

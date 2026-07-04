@@ -8,6 +8,13 @@ const itemKeys = {
 	byList: (listId: string) => ["lists", listId, "items"] as const,
 };
 
+export function useItem(id: string) {
+	return useQuery({
+		queryKey: itemKeys.detail(id),
+		queryFn: () => api.getItem(id),
+	});
+}
+
 export function useListItems(id: string) {
 	return useQuery({
 		queryKey: itemKeys.byList(id),
@@ -32,46 +39,16 @@ export function useAddItemToList(
 	});
 }
 
-// export interface AddItemToList {
-// 	item_id: string;
-// }
-
-// export function useCreateList(options?: { onSuccess?: () => void }) {
-// 	const queryClient = useQueryClient();
-// 	return useMutation({
-// 		mutationFn: api.addItemToList,
-// 		onSuccess: () => {
-// 			queryClient.invalidateQueries({
-// 				queryKey: LISTS_KEY,
-// 			});
-// 			options?.onSuccess?.();
-// 		},
-// 	});
-// }
-
-// export function useUpdateList(options?: { onSuccess?: () => void }) {
-// 	const queryClient = useQueryClient();
-// 	return useMutation({
-// 		mutationFn: ({ id, data }: { id: string; data: UpdateList }) =>
-// 			api.importItem(id, data),
-// 		onSuccess: () => {
-// 			queryClient.invalidateQueries({
-// 				queryKey: LISTS_KEY,
-// 			});
-// 			options?.onSuccess?.();
-// 		},
-// 	});
-// }
-
-// export function useDeleteList(options?: { onSuccess?: () => void }) {
-// 	const queryClient = useQueryClient();
-// 	return useMutation({
-// 		mutationFn: api.deleteItemFromList,
-// 		onSuccess: () => {
-// 			queryClient.invalidateQueries({
-// 				queryKey: LISTS_KEY,
-// 			});
-// 			options?.onSuccess?.();
-// 		},
-// 	});
-// }
+export function useDeleteItemFromList(
+	listId: string,
+	options?: { onSuccess?: () => void },
+) {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (itemId: string) => api.deleteItemFromList(listId, itemId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: itemKeys.byList(listId) });
+			options?.onSuccess?.();
+		},
+	});
+}
