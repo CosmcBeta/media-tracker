@@ -112,7 +112,7 @@ pub struct MusicBrainzArtist {
     pub artist_type: Option<String>,
     pub gender: Option<String>,
     pub country: Option<String>,
-    pub life_span: MusicBrainzLifeSpan,
+    pub life_span: Option<MusicBrainzLifeSpan>,
     #[serde(default)]
     pub tags: Vec<MusicBrainzTag>,
 }
@@ -125,7 +125,7 @@ impl From<MusicBrainzArtist> for SearchCandidate {
             external_id: api.id,
             title: api.name,
             media_type: MediaType::Artist,
-            year: api.life_span.begin,
+            year: api.life_span.and_then(|ls| ls.begin),
             description: None,
             poster_url: None, // will add from either spotify/last.fm
             metadata,

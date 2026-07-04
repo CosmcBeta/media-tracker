@@ -25,6 +25,9 @@ pub struct TmdbShow {
 impl From<TmdbShow> for SearchCandidate {
     fn from(api: TmdbShow) -> Self {
         let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
+        let poster_url = api
+            .poster_path
+            .map(|path| format!("https://image.tmdb.org/t/p/w200{path}"));
 
         SearchCandidate {
             external_id: api.id.to_string(),
@@ -32,7 +35,7 @@ impl From<TmdbShow> for SearchCandidate {
             media_type: MediaType::Show,
             year: api.first_air_date,
             description: api.overview,
-            poster_url: api.poster_path,
+            poster_url,
             metadata,
         }
     }
@@ -85,6 +88,9 @@ pub struct TmdbMovie {
 impl From<TmdbMovie> for SearchCandidate {
     fn from(api: TmdbMovie) -> Self {
         let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
+        let poster_url = api
+            .poster_path
+            .map(|path| format!("https://image.tmdb.org/t/p/w200{path}"));
 
         SearchCandidate {
             external_id: api.id.to_string(),
@@ -92,7 +98,7 @@ impl From<TmdbMovie> for SearchCandidate {
             media_type: MediaType::Movie,
             year: api.release_date,
             description: api.overview,
-            poster_url: api.poster_path,
+            poster_url,
             metadata,
         }
     }

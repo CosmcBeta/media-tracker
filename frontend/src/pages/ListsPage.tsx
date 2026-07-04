@@ -12,8 +12,10 @@ export default function ListsPage() {
 	}
 
 	return (
-		<div>
-			<CreateListDialog />
+		<div className="flex flex-col gap-4 p-4">
+		  <div className="flex">
+				<CreateListDialog />
+			</div>
 
 			<ListGrid lists={lists} />
 		</div>
