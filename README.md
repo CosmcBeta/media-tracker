@@ -13,4 +13,4 @@ todo:
 - create a docker-compose file to run postgres and sever in docker
 - change the lists to instead of having a logo it shows the most recent item added to that list
 - add users
-- remove podacts all together
+- remove podcasts all together, also artists and books
