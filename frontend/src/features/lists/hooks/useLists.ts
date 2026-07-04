@@ -11,6 +11,14 @@ export function useLists() {
 	});
 }
 
+export function useList(id: string) {
+	const { data: lists, ...rest } = useLists();
+	return {
+		...rest,
+		data: lists?.find((list) => list.id === id),
+	};
+}
+
 export function useCreateList(options?: { onSuccess?: () => void }) {
 	const queryClient = useQueryClient();
 	return useMutation({
