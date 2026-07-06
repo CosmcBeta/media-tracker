@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProgressSection } from "@/features/progress";
 import { useItem } from "../hooks/useItems";
 import { parseItemMetadata } from "../lib/parseMetadata";
 import { AlbumMetadataView } from "./metadata/AlbumMetadataView";
@@ -29,20 +30,27 @@ export function ItemDetailsContent({ itemId }: { itemId: string }) {
 
 	const metadata = parseItemMetadata(item);
 
-	if (!metadata) {
-		return <h2 className="text-xl font-semibold">{item.title}</h2>;
+	function renderMetadata() {
+		if (!metadata)
+			return <h2 className="text-xl font-semibold">{item.title}</h2>;
+		switch (metadata.mediaType) {
+			case "Album":
+				return <AlbumMetadataView data={metadata.data} />;
+			case "Artist":
+				return <ArtistMetadataView data={metadata.data} />;
+			case "Game":
+				return <GameMetadataView data={metadata.data} />;
+			case "Movie":
+				return <MovieMetadataView data={metadata.data} />;
+			case "Show":
+				return <ShowMetadataView data={metadata.data} />;
+		}
 	}
 
-	switch (metadata.mediaType) {
-		case "Album":
-			return <AlbumMetadataView data={metadata.data} />;
-		case "Artist":
-			return <ArtistMetadataView data={metadata.data} />;
-		case "Game":
-			return <GameMetadataView data={metadata.data} />;
-		case "Movie":
-			return <MovieMetadataView data={metadata.data} />;
-		case "Show":
-			return <ShowMetadataView data={metadata.data} />;
-	}
+	return (
+		<div>
+			{renderMetadata()}
+			<ProgressSection itemId={itemId} />
+		</div>
+	);
 }
