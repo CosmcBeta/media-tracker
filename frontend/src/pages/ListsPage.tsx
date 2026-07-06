@@ -13,7 +13,7 @@ export default function ListsPage() {
 
 	return (
 		<div className="flex flex-col gap-4 p-4">
-		  <div className="flex">
+			<div className="flex">
 				<CreateListDialog />
 			</div>
 
@@ -21,21 +21,3 @@ export default function ListsPage() {
 		</div>
 	);
 }
-
-// <Page>
-
-//     <PageTitle />
-
-//     <Toolbar />
-
-//     <ListGrid />
-
-// </Page>
-//
-// <Toolbar>
-//  <SearchLists />
-
-//  <SortDropdown />
-
-//  <CreateListButton />
-// </Toolbar>
