@@ -13,7 +13,7 @@ pub struct Progress {
     pub logged_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "TEXT", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum ProgressKind {

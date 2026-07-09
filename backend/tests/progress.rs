@@ -2,13 +2,14 @@ mod common;
 
 use axum::http::StatusCode;
 use serde_json::json;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::setup;
 
-#[tokio::test]
-async fn get_item_progress_returns_empty_array_when_none_exist() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_item_progress_returns_empty_array_when_none_exist(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -24,9 +25,9 @@ async fn get_item_progress_returns_empty_array_when_none_exist() {
     response.assert_json(&json!([]));
 }
 
-#[tokio::test]
-async fn get_item_progress_returns_all_progresses() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_item_progress_returns_all_progresses(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -54,11 +55,11 @@ async fn get_item_progress_returns_all_progresses() {
     assert_eq!(body.as_array().unwrap().len(), 2);
 }
 
-#[tokio::test]
-async fn get_item_progress_returns_404_when_item_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_item_progress_returns_404_when_item_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .get(&format!("{}/items/{uuid}/progress", common::API))
@@ -67,11 +68,11 @@ async fn get_item_progress_returns_404_when_item_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn create_item_progress_returns_404_when_item_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_item_progress_returns_404_when_item_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .post(&format!("{}/items/{uuid}/progress", common::API))
@@ -81,9 +82,9 @@ async fn create_item_progress_returns_404_when_item_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn create_item_progress_returns_400_when_invalid_date_provided() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_item_progress_returns_400_when_invalid_date_provided(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -100,9 +101,9 @@ async fn create_item_progress_returns_400_when_invalid_date_provided() {
     response.assert_status_bad_request();
 }
 
-#[tokio::test]
-async fn create_item_progress_returns_201_with_progress() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_item_progress_returns_201_with_progress(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -121,9 +122,9 @@ async fn create_item_progress_returns_201_with_progress() {
     assert_eq!(body["kind"], "episode");
 }
 
-#[tokio::test]
-async fn create_item_progress_returns_422_when_missing_required_fields() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_item_progress_returns_422_when_missing_required_fields(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -140,11 +141,11 @@ async fn create_item_progress_returns_422_when_missing_required_fields() {
     response.assert_status_unprocessable_entity();
 }
 
-#[tokio::test]
-async fn delete_item_progress_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_progress_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid_progress = Uuid::new_v4();
+    let uuid_progress = Uuid::now_v7();
 
     let response = server
         .delete(&format!("{}/progress/{uuid_progress}", common::API))
@@ -153,9 +154,9 @@ async fn delete_item_progress_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn delete_item_progress_returns_204() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_progress_returns_204(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -178,9 +179,9 @@ async fn delete_item_progress_returns_204() {
     response.assert_status_no_content();
 }
 
-#[tokio::test]
-async fn delete_item_progress_is_no_longer_retrievable() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_progress_is_no_longer_retrievable(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))

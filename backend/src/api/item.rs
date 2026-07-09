@@ -5,7 +5,7 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::{DateTime, Utc};
-use sqlx::{Arguments, AssertSqlSafe, SqlitePool, query, sqlite::SqliteArguments};
+use sqlx::{Arguments, AssertSqlSafe, PgPool, postgres::PgArguments, query};
 use uuid::Uuid;
 
 use crate::{
@@ -42,7 +42,7 @@ pub async fn create_item(
     Json(input): Json<CreateItem>,
 ) -> Result<impl IntoResponse, AppError> {
     let item = Item {
-        id: Uuid::new_v4(),
+        id: Uuid::now_v7(),
         media_type: input.media_type,
         title: input.title,
         external_id: None,
@@ -70,39 +70,43 @@ pub async fn update_item(
     State(state): State<AppState>,
     Json(input): Json<UpdateItem>,
 ) -> Result<impl IntoResponse, AppError> {
+    let mut args = PgArguments::default();
+    args.add(&id)?;
     let mut sets = Vec::new();
-    let mut args = SqliteArguments::default();
+    let mut idx = 2;
 
     if let Some(title) = input.title {
-        sets.push("title = ?");
+        sets.push(format!("title = ${idx}"));
         args.add(title)?;
+        idx += 1;
     }
 
     if let Some(media_type) = input.media_type {
-        sets.push("media_type = ?");
+        sets.push(format!("media_type = ${idx}"));
         args.add(media_type)?;
+        idx += 1;
     }
 
     if let Some(external_id) = input.external_id {
-        sets.push("external_id = ?");
+        sets.push(format!("external_id = ${idx}"));
         args.add(external_id)?;
+        idx += 1;
     }
 
     if let Some(metadata) = input.metadata {
-        sets.push("metadata = ?");
+        sets.push(format!("metadata = ${idx}"));
         args.add(metadata)?;
+        idx += 1;
     }
 
     if sets.is_empty() {
         return Err(AppError::BadRequest("no arguments given".to_string()));
     }
 
-    sets.push("updated_at = ?");
-    args.add(Utc::now().to_rfc3339())?;
+    sets.push(format!("updated_at = ${idx}"));
+    args.add(Utc::now())?;
 
-    let query = format!("UPDATE items SET {} WHERE id = ?", sets.join(", "));
-    args.add(&id)?;
-
+    let query = format!("UPDATE items SET {} WHERE id = $1", sets.join(", "));
     sqlx::query_with(AssertSqlSafe(query), args)
         .execute(&state.db)
         .await?;
@@ -116,7 +120,7 @@ pub async fn delete_item(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    let result = query!("DELETE FROM items WHERE id = ?", id)
+    let result = query!("DELETE FROM items WHERE id = $1", id)
         .execute(&state.db)
         .await?;
 
@@ -190,9 +194,9 @@ pub async fn import_item(
         metadata,
         created_at as "created_at: DateTime<Utc>",
         updated_at as "updated_at: DateTime<Utc>"
-        FROM items WHERE external_id = ? AND media_type = ?"#,
+        FROM items WHERE external_id = $1 AND media_type = $2"#,
         candidate.external_id,
-        candidate.media_type
+        candidate.media_type as MediaType
     )
     .fetch_optional(&state.db)
     .await?;
@@ -212,14 +216,12 @@ pub async fn import_item(
         .await?;
 
         if let Some(ttc) = time_to_complete {
-            let mut metadata_json: serde_json::Value = serde_json::from_str(&metadata)?;
-            metadata_json["time_to_beat"] = serde_json::to_value(&ttc)?;
-            metadata = serde_json::to_string(&metadata_json)?;
+            metadata["time_to_beat"] = serde_json::to_value(&ttc)?;
         }
     }
 
     let item = Item {
-        id: Uuid::new_v4(),
+        id: Uuid::now_v7(),
         media_type: candidate.media_type,
         title: candidate.title,
         external_id: Some(candidate.external_id),
@@ -233,7 +235,7 @@ pub async fn import_item(
     Ok((StatusCode::CREATED, Json(item)))
 }
 
-pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppError> {
+pub async fn get_item_by_id(pool: &PgPool, id: &Uuid) -> Result<Item, AppError> {
     let item = sqlx::query_as!(
         Item,
         r#"SELECT
@@ -244,7 +246,7 @@ pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppErr
         metadata,
         created_at as "created_at: DateTime<Utc>",
         updated_at as "updated_at: DateTime<Utc>"
-        FROM items WHERE id = ?"#,
+        FROM items WHERE id = $1"#,
         id
     )
     .fetch_optional(pool)
@@ -256,17 +258,17 @@ pub async fn get_item_by_id(pool: &SqlitePool, id: &Uuid) -> Result<Item, AppErr
     }
 }
 
-async fn insert_item(pool: &SqlitePool, item: &Item) -> Result<(), AppError> {
+async fn insert_item(pool: &PgPool, item: &Item) -> Result<(), AppError> {
     let result = sqlx::query!(
         r#"INSERT INTO items (id, media_type, title, external_id, metadata, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)"#,
+        VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
         item.id,
-        item.media_type,
+        item.media_type as MediaType,
         item.title,
         item.external_id,
         item.metadata,
-        item.created_at.to_rfc3339(),
-        item.updated_at.to_rfc3339()
+        item.created_at,
+        item.updated_at
     )
     .execute(pool)
     .await;

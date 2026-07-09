@@ -9,12 +9,12 @@ pub struct Item {
     pub media_type: MediaType,
     pub title: String,
     pub external_id: Option<String>,
-    pub metadata: Option<String>,
+    pub metadata: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "TEXT", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum MediaType {

@@ -2,21 +2,22 @@ mod common;
 
 use axum::http::StatusCode;
 use serde_json::json;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::setup;
 
-#[tokio::test]
-async fn get_lists_returns_empty_array_when_none_exist() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_lists_returns_empty_array_when_none_exist(pool: PgPool) {
+    let server = setup(pool).await;
     let response = server.get(&format!("{}/lists", common::API)).await;
 
     response.assert_json(&json!([]));
 }
 
-#[tokio::test]
-async fn get_lists_returns_all_lists() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_lists_returns_all_lists(pool: PgPool) {
+    let server = setup(pool).await;
 
     server
         .post(&format!("{}/lists", common::API))
@@ -35,9 +36,9 @@ async fn get_lists_returns_all_lists() {
     assert_eq!(body.as_array().unwrap().len(), 2);
 }
 
-#[tokio::test]
-async fn create_list_returns_201_with_list() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_list_returns_201_with_list(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -50,9 +51,9 @@ async fn create_list_returns_201_with_list() {
     assert_eq!(body["name"], "Movies to Watch");
 }
 
-#[tokio::test]
-async fn create_list_returns_422_with_missing_required_fields() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_list_returns_422_with_missing_required_fields(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -62,9 +63,9 @@ async fn create_list_returns_422_with_missing_required_fields() {
     response.assert_status_unprocessable_entity();
 }
 
-#[tokio::test]
-async fn update_list_returns_400_with_no_fields() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_list_returns_400_with_no_fields(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -82,11 +83,11 @@ async fn update_list_returns_400_with_no_fields() {
     response.assert_status_bad_request();
 }
 
-#[tokio::test]
-async fn update_list_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_list_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .patch(&format!("{}/lists/{uuid}", common::API))
@@ -96,9 +97,9 @@ async fn update_list_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn update_list_returns_updated_list() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_list_returns_updated_list(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -121,9 +122,9 @@ async fn update_list_returns_updated_list() {
     assert_eq!(body["name"], "Shows to Watch");
 }
 
-#[tokio::test]
-async fn update_list_changes_are_persisted() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_list_changes_are_persisted(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -148,11 +149,11 @@ async fn update_list_changes_are_persisted() {
     assert_eq!(name, "Shows to Watch");
 }
 
-#[tokio::test]
-async fn delete_list_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_list_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .delete(&format!("{}/lists/{uuid}", common::API))
@@ -161,9 +162,9 @@ async fn delete_list_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn delete_list_returns_204() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_list_returns_204(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -180,9 +181,9 @@ async fn delete_list_returns_204() {
     response.assert_status_no_content();
 }
 
-#[tokio::test]
-async fn delete_list_is_no_longer_retrievable() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_list_is_no_longer_retrievable(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -201,9 +202,9 @@ async fn delete_list_is_no_longer_retrievable() {
     response.assert_json(&json!([]));
 }
 
-#[tokio::test]
-async fn get_list_items_returns_empty_array_when_none_exist() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_list_items_returns_empty_array_when_none_exist(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -220,11 +221,11 @@ async fn get_list_items_returns_empty_array_when_none_exist() {
     response.assert_json(&json!([]));
 }
 
-#[tokio::test]
-async fn get_list_items_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_list_items_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .get(&format!("{}/lists/{uuid}/items", common::API))
@@ -233,9 +234,9 @@ async fn get_list_items_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn get_list_items_returns_all_items() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_list_items_returns_all_items(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -278,9 +279,9 @@ async fn get_list_items_returns_all_items() {
     assert_eq!(body.as_array().unwrap().len(), 2);
 }
 
-#[tokio::test]
-async fn add_item_to_list_returns_404_when_list_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn add_item_to_list_returns_404_when_list_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -289,7 +290,7 @@ async fn add_item_to_list_returns_404_when_list_not_found() {
     let body: serde_json::Value = response.json();
     let uuid_item = body["id"].as_str().unwrap();
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .post(&format!("{}/lists/{uuid}/items", common::API))
@@ -299,9 +300,9 @@ async fn add_item_to_list_returns_404_when_list_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn add_item_to_list_returns_404_when_item_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn add_item_to_list_returns_404_when_item_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -310,7 +311,7 @@ async fn add_item_to_list_returns_404_when_item_not_found() {
 
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
-    let uuid_item = Uuid::new_v4();
+    let uuid_item = Uuid::now_v7();
 
     let response = server
         .post(&format!("{}/lists/{uuid}/items", common::API))
@@ -320,9 +321,9 @@ async fn add_item_to_list_returns_404_when_item_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn add_item_to_list_returns_422_with_missing_item_id() {
-    let server = setup().await;
+#[sqlx::test]
+async fn add_item_to_list_returns_422_with_missing_item_id(pool: PgPool) {
+    let server = setup(pool).await;
 
     server
         .post(&format!("{}/items", common::API))
@@ -345,9 +346,9 @@ async fn add_item_to_list_returns_422_with_missing_item_id() {
     response.assert_status_unprocessable_entity();
 }
 
-#[tokio::test]
-async fn add_item_to_list_returns_201_when_added() {
-    let server = setup().await;
+#[sqlx::test]
+async fn add_item_to_list_returns_201_when_added(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -373,9 +374,9 @@ async fn add_item_to_list_returns_201_when_added() {
     response.assert_status(StatusCode::CREATED);
 }
 
-#[tokio::test]
-async fn delete_item_from_list_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_from_list_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/lists", common::API))
@@ -384,7 +385,7 @@ async fn delete_item_from_list_returns_404_when_not_found() {
 
     let body: serde_json::Value = response.json();
     let uuid = body["id"].as_str().unwrap();
-    let uuid_item = Uuid::new_v4();
+    let uuid_item = Uuid::now_v7();
 
     let response = server
         .delete(&format!("{}/lists/{uuid}/items/{uuid_item}", common::API))
@@ -393,9 +394,9 @@ async fn delete_item_from_list_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn delete_item_from_list_returns_204() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_from_list_returns_204(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -425,9 +426,9 @@ async fn delete_item_from_list_returns_204() {
     response.assert_status_no_content();
 }
 
-#[tokio::test]
-async fn delete_item_from_list_is_no_longer_on_list() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_from_list_is_no_longer_on_list(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))

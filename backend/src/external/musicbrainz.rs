@@ -22,7 +22,7 @@ pub struct MusicBrainzReleaseGroup {
 
 impl From<MusicBrainzReleaseGroup> for SearchCandidate {
     fn from(api: MusicBrainzReleaseGroup) -> Self {
-        let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
+        let metadata = serde_json::to_value(&api).expect("failed to serialize metadata");
         let poster_url = Some(format!(
             "https://coverartarchive.org/release-group/{}/front",
             &api.id
@@ -119,7 +119,7 @@ pub struct MusicBrainzArtist {
 
 impl From<MusicBrainzArtist> for SearchCandidate {
     fn from(api: MusicBrainzArtist) -> Self {
-        let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
+        let metadata = serde_json::to_value(&api).expect("failed to serialize metadata");
 
         SearchCandidate {
             external_id: api.id,

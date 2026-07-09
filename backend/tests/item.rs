@@ -2,21 +2,22 @@ mod common;
 
 use axum::http::StatusCode;
 use serde_json::json;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 use common::setup;
 
-#[tokio::test]
-async fn get_items_returns_empty_array_when_none_exist() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_items_returns_empty_array_when_none_exist(pool: PgPool) {
+    let server = setup(pool).await;
     let response = server.get(&format!("{}/items", common::API)).await;
 
     response.assert_json(&json!([]));
 }
 
-#[tokio::test]
-async fn get_items_returns_all_items() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_items_returns_all_items(pool: PgPool) {
+    let server = setup(pool).await;
 
     server
         .post(&format!("{}/items", common::API))
@@ -35,9 +36,9 @@ async fn get_items_returns_all_items() {
     assert_eq!(body.as_array().unwrap().len(), 2);
 }
 
-#[tokio::test]
-async fn create_item_returns_201_with_item() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_item_returns_201_with_item(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -51,9 +52,9 @@ async fn create_item_returns_201_with_item() {
     assert_eq!(body["title"], "One Piece");
 }
 
-#[tokio::test]
-async fn create_item_returns_422_with_missing_required_fields() {
-    let server = setup().await;
+#[sqlx::test]
+async fn create_item_returns_422_with_missing_required_fields(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -63,20 +64,20 @@ async fn create_item_returns_422_with_missing_required_fields() {
     response.assert_status_unprocessable_entity();
 }
 
-#[tokio::test]
-async fn get_item_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_item_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server.get(&format!("{}/items/{uuid}", common::API)).await;
 
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn get_item_returns_item_when_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn get_item_returns_item_when_found(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -95,9 +96,9 @@ async fn get_item_returns_item_when_found() {
     assert_eq!(body["title"], "One Piece");
 }
 
-#[tokio::test]
-async fn update_item_returns_400_with_no_fields() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_item_returns_400_with_no_fields(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -115,11 +116,11 @@ async fn update_item_returns_400_with_no_fields() {
     response.assert_status_bad_request();
 }
 
-#[tokio::test]
-async fn update_item_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_item_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .patch(&format!("{}/items/{uuid}", common::API))
@@ -129,9 +130,9 @@ async fn update_item_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn update_item_returns_updated_item() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_item_returns_updated_item(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -156,9 +157,9 @@ async fn update_item_returns_updated_item() {
     assert_eq!(body["title"], "Attack On Titan");
 }
 
-#[tokio::test]
-async fn update_item_changes_are_persisted() {
-    let server = setup().await;
+#[sqlx::test]
+async fn update_item_changes_are_persisted(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -180,11 +181,11 @@ async fn update_item_changes_are_persisted() {
     assert_eq!(body["title"], "Attack On Titan");
 }
 
-#[tokio::test]
-async fn delete_item_returns_404_when_not_found() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_returns_404_when_not_found(pool: PgPool) {
+    let server = setup(pool).await;
 
-    let uuid = Uuid::new_v4();
+    let uuid = Uuid::now_v7();
 
     let response = server
         .delete(&format!("{}/items/{uuid}", common::API))
@@ -193,9 +194,9 @@ async fn delete_item_returns_404_when_not_found() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn delete_item_returns_204() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_returns_204(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -212,9 +213,9 @@ async fn delete_item_returns_204() {
     response.assert_status_no_content();
 }
 
-#[tokio::test]
-async fn delete_item_is_no_longer_retrievable() {
-    let server = setup().await;
+#[sqlx::test]
+async fn delete_item_is_no_longer_retrievable(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items", common::API))
@@ -233,9 +234,9 @@ async fn delete_item_is_no_longer_retrievable() {
     response.assert_status_not_found();
 }
 
-#[tokio::test]
-async fn search_items_returns_results() {
-    let server = setup().await;
+#[sqlx::test]
+async fn search_items_returns_results(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .get(&format!("{}/items/search", common::API))
@@ -248,9 +249,9 @@ async fn search_items_returns_results() {
     assert!(body.as_array().unwrap().len() > 0);
 }
 
-#[tokio::test]
-async fn search_items_returns_400_for_unsupported_media_type() {
-    let server = setup().await;
+#[sqlx::test]
+async fn search_items_returns_400_for_unsupported_media_type(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .get(&format!("{}/items/search", common::API))
@@ -261,9 +262,9 @@ async fn search_items_returns_400_for_unsupported_media_type() {
     response.assert_status_bad_request();
 }
 
-#[tokio::test]
-async fn search_items_returns_400_for_unimplemented_book() {
-    let server = setup().await;
+#[sqlx::test]
+async fn search_items_returns_400_for_unimplemented_book(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .get(&format!("{}/items/search", common::API))
@@ -274,9 +275,9 @@ async fn search_items_returns_400_for_unimplemented_book() {
     response.assert_status_bad_request();
 }
 
-#[tokio::test]
-async fn search_items_returns_400_for_unimplemented_podcast() {
-    let server = setup().await;
+#[sqlx::test]
+async fn search_items_returns_400_for_unimplemented_podcast(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .get(&format!("{}/items/search", common::API))
@@ -287,9 +288,9 @@ async fn search_items_returns_400_for_unimplemented_podcast() {
     response.assert_status_bad_request();
 }
 
-#[tokio::test]
-async fn import_item_returns_201_with_item() {
-    let server = setup().await;
+#[sqlx::test]
+async fn import_item_returns_201_with_item(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items/import", common::API))
@@ -314,9 +315,9 @@ async fn import_item_returns_201_with_item() {
     assert_eq!(body["title"], "One Piece");
 }
 
-#[tokio::test]
-async fn import_item_returns_200_with_item_with_existing_external_id() {
-    let server = setup().await;
+#[sqlx::test]
+async fn import_item_returns_200_with_item_with_existing_external_id(pool: PgPool) {
+    let server = setup(pool).await;
 
     server
         .post(&format!("{}/items/import", common::API))
@@ -358,9 +359,9 @@ async fn import_item_returns_200_with_item_with_existing_external_id() {
     assert_eq!(body["title"], "One Piece");
 }
 
-#[tokio::test]
-async fn import_item_returns_422_with_missing_required_fields() {
-    let server = setup().await;
+#[sqlx::test]
+async fn import_item_returns_422_with_missing_required_fields(pool: PgPool) {
+    let server = setup(pool).await;
 
     let response = server
         .post(&format!("{}/items/import", common::API))

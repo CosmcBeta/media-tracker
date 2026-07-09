@@ -10,5 +10,5 @@ pub struct SearchCandidate {
     pub year: Option<String>,
     pub description: Option<String>,
     pub poster_url: Option<String>,
-    pub metadata: String,
+    pub metadata: serde_json::Value,
 }

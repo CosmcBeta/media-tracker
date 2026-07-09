@@ -48,7 +48,7 @@ pub struct IgdbGame {
 
 impl From<IgdbGame> for SearchCandidate {
     fn from(api: IgdbGame) -> Self {
-        let metadata = serde_json::to_string(&api).expect("failed to serialize metadata");
+        let metadata = serde_json::to_value(&api).expect("failed to serialize metadata");
 
         SearchCandidate {
             external_id: api.id.to_string(),

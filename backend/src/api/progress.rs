@@ -30,7 +30,7 @@ pub async fn get_item_progress(
         value,
         note,
         logged_at as "logged_at: DateTime<Utc>"
-        FROM progress WHERE item_id = ?"#,
+        FROM progress WHERE item_id = $1"#,
         id
     )
     .fetch_all(&state.db)
@@ -54,7 +54,7 @@ pub async fn create_item_progress(
     };
 
     let progress = Progress {
-        id: Uuid::new_v4(),
+        id: Uuid::now_v7(),
         item_id: id,
         kind: input.kind,
         value: input.value,
@@ -64,13 +64,13 @@ pub async fn create_item_progress(
 
     sqlx::query!(
         r#"INSERT INTO progress (id, item_id, kind, value, note, logged_at)
-        VALUES (?, ?, ?, ?, ?, ?)"#,
+        VALUES ($1, $2, $3, $4, $5, $6)"#,
         progress.id,
         progress.item_id,
-        progress.kind,
+        progress.kind as ProgressKind,
         progress.value,
         progress.note,
-        progress.logged_at.to_rfc3339()
+        progress.logged_at
     )
     .execute(&state.db)
     .await?;
@@ -82,7 +82,7 @@ pub async fn delete_item_progress(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    let result = query!("DELETE FROM progress WHERE id = ?", id)
+    let result = query!("DELETE FROM progress WHERE id = $1", id)
         .execute(&state.db)
         .await?;
 

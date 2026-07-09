@@ -1,6 +1,6 @@
 use axum_test::TestServer;
 use reqwest::Client;
-use sqlx::SqlitePool;
+use sqlx::PgPool;
 use std::env;
 
 use backend::{
@@ -13,18 +13,15 @@ use backend::{
 pub const API: &str = "/api/v1";
 
 #[allow(dead_code)]
-pub async fn setup() -> TestServer {
+pub async fn setup(pool: PgPool) -> TestServer {
     dotenvy::dotenv().ok();
 
-    let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
     let client = Client::new();
 
     let tmdb_access_token = env::var("TMDB_ACCESS_TOKEN").expect("TMDB_ACCESS_TOKEN must be set");
     let igdb_client_id = env::var("IGDB_CLIENT_ID").expect("IGDB_CLIENT_ID must be set");
     let igdb_client_secret =
         env::var("IGDB_CLIENT_SECRET").expect("IGDB_CLIENT_SECRET must be set");
-
     let igdb_access_token = igdb::fetch_igdb_token(&client, &igdb_client_id, &igdb_client_secret)
         .await
         .expect("failed to get igdb access token");

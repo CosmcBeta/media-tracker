@@ -1,12 +1,12 @@
 {
-  "db_name": "SQLite",
-  "query": "SELECT\n        i.id AS \"id!: Uuid\",\n        i.media_type AS \"media_type: MediaType\",\n        i.title,\n        i.external_id,\n        i.metadata,\n        i.created_at as \"created_at: DateTime<Utc>\",\n        i.updated_at as \"updated_at: DateTime<Utc>\"\n        FROM items i\n        INNER JOIN list_items li ON i.id = li.item_id\n        WHERE li.list_id = ?",
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n        i.id AS \"id!: Uuid\",\n        i.media_type AS \"media_type: MediaType\",\n        i.title,\n        i.external_id,\n        i.metadata,\n        i.created_at as \"created_at: DateTime<Utc>\",\n        i.updated_at as \"updated_at: DateTime<Utc>\"\n        FROM items i\n        INNER JOIN list_items li ON i.id = li.item_id\n        WHERE li.list_id = $1",
   "describe": {
     "columns": [
       {
-        "name": "id!: Uuid",
         "ordinal": 0,
-        "type_info": "Text",
+        "name": "id!: Uuid",
+        "type_info": "Uuid",
         "origin": {
           "Table": {
             "table": "items",
@@ -15,8 +15,8 @@
         }
       },
       {
-        "name": "media_type: MediaType",
         "ordinal": 1,
+        "name": "media_type: MediaType",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -26,8 +26,8 @@
         }
       },
       {
-        "name": "title",
         "ordinal": 2,
+        "name": "title",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -37,8 +37,8 @@
         }
       },
       {
-        "name": "external_id",
         "ordinal": 3,
+        "name": "external_id",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -48,9 +48,9 @@
         }
       },
       {
-        "name": "metadata",
         "ordinal": 4,
-        "type_info": "Text",
+        "name": "metadata",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
             "table": "items",
@@ -59,9 +59,9 @@
         }
       },
       {
-        "name": "created_at: DateTime<Utc>",
         "ordinal": 5,
-        "type_info": "Text",
+        "name": "created_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
         "origin": {
           "Table": {
             "table": "items",
@@ -70,9 +70,9 @@
         }
       },
       {
-        "name": "updated_at: DateTime<Utc>",
         "ordinal": 6,
-        "type_info": "Text",
+        "name": "updated_at: DateTime<Utc>",
+        "type_info": "Timestamptz",
         "origin": {
           "Table": {
             "table": "items",
@@ -82,10 +82,12 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
-      true,
+      false,
       false,
       false,
       true,
@@ -94,5 +96,5 @@
       false
     ]
   },
-  "hash": "7be4aaf2086d64bdab27918fc7e8b05a80323c94c7d59c790388beb39234688e"
+  "hash": "2f483945ebf5a5d4d1e070f7bff912b54e4aaf8329b007524735cff9f8585dba"
 }
