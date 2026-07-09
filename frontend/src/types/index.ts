@@ -14,7 +14,7 @@ export interface Item {
 	media_type: MediaType;
 	title: string;
 	external_id: string | null;
-	metadata: string | null;
+	metadata: Record<string, unknown> | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -67,7 +67,7 @@ export interface UpdateItem {
 	media_type?: MediaType;
 	title?: string;
 	external_id?: string;
-	metadata?: string;
+	metadata?: Record<string, unknown>;
 }
 
 export interface UpdateList {

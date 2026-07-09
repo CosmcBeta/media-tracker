@@ -11,12 +11,7 @@ import type {
 export function parseItemMetadata(item: Item): ParsedItemMetadata | null {
 	if (!item.metadata) return null;
 
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(item.metadata);
-	} catch {
-		return null;
-	}
+	const parsed: unknown = item.metadata;
 
 	switch (item.media_type) {
 		case "album":
