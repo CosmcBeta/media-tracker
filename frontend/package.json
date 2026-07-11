@@ -8,7 +8,8 @@
 		"build": "tsc -b && vite build",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"test": "vitest"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.6.0",
@@ -30,11 +31,20 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.0",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/react": "^16.3.2",
 		"@types/node": "^24.13.2",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.1",
+		"msw": "^2.15.0",
 		"typescript": "~6.0.2",
-		"vite": "^8.0.12"
+		"vite": "^8.0.12",
+		"vitest": "^4.1.10"
+	},
+	"msw": {
+		"workerDirectory": [
+			"public"
+		]
 	}
 }

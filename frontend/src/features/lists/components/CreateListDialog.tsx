@@ -38,7 +38,7 @@ export function CreateListDialog() {
 
 		createList.mutate({
 			name: name,
-			icon: icon,
+			icon: icon ?? undefined,
 		});
 	}
 

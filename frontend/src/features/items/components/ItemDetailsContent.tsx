@@ -28,11 +28,12 @@ export function ItemDetailsContent({ itemId }: { itemId: string }) {
 		return <p className="text-sm text-destructive">Couldn't load this item.</p>;
 	}
 
-	const metadata = parseItemMetadata(item);
+	const currentItem = item;
+	const metadata = parseItemMetadata(currentItem);
 
 	function renderMetadata() {
 		if (!metadata)
-			return <h2 className="text-xl font-semibold">{item.title}</h2>;
+			return <h2 className="text-xl font-semibold">{currentItem.title}</h2>;
 		switch (metadata.mediaType) {
 			case "Album":
 				return <AlbumMetadataView data={metadata.data} />;

@@ -36,7 +36,7 @@ export function EditListDialog({ list }: { list: List }) {
 			id: list.id,
 			data: {
 				name: name,
-				icon: icon,
+				icon: icon ?? undefined,
 			},
 		});
 	}
