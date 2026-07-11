@@ -1,16 +1,98 @@
-# Media Tracker
+# Atlas Media Tracker
 
-This is a simple media tracker that you can track what shows, movies, books, and music you are watching/reading/listening to. This is a work in progress.
+A self-hosted media tracker for movies, shows, games, albums, and artists built to run entirely on your own infrastructure.
 
-todo:
-- add a way that the progress is locked based on what the media type is. like books are locked to pages
-- add a way to check igdb auth automatically when the token expires, allowing the server to be ran forever without constant restarts
-- add books api, figure out which to use first
-- add podcast api
-- add colors for lists
-- update icons for creating and updating lists to have all of lucids icons by importing all of them and making a picker for them
-- update from sqlite to progresql
-- create a docker-compose file to run postgres and sever in docker
-- change the lists to instead of having a logo it shows the most recent item added to that list
-- add users
-- remove podcasts all together, also artists and books
+Organize everything into custom lists, track progress on what you're watching/playing/listening to, and search across multiple media types with metadata pulled live from TMDB, IGDB, and MusicBrainz.
+
+## Features
+
+- **Lists** — create custom lists (watchlists, backlogs, favorites, etc.) with icons
+- **Multi-type search** — debounced search across movies, shows, games, albums, and artists
+- **Rich item details** — media-type-specific metadata views for each category
+- **Progress tracking** — log and review progress history per item
+- **Fully self-hosted** — your data, your server, no third-party accounts required
+
+## Tech Stack
+
+**Backend**
+- [Rust](https://www.rust-lang.org/) + [Axum](https://github.com/tokio-rs/axum)
+- [SQLx](https://github.com/launchbadge/sqlx) with PostgreSQL
+- External metadata sources: TMDB, IGDB, MusicBrainz
+
+**Frontend**
+- React + TypeScript + Vite
+- [TanStack Query](https://tanstack.com/query) for data fetching/caching
+- [shadcn/ui](https://ui.shadcn.com/) components (Base UI primitives)
+- Tailwind CSS
+- Tested with Vitest, React Testing Library, and MSW
+
+**Infrastructure**
+- Docker Compose (PostgreSQL, Rust backend, nginx-served frontend)
+- nginx reverse proxy for API routing
+
+## Getting Started
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+- API credentials for [TMDB](https://www.themoviedb.org/settings/api) and [IGDB](https://api-docs.igdb.com/#getting-started) (MusicBrainz requires no key)
+
+### Setup
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/CosmcBeta/atlas-media-tracker.git
+   cd atlas-media-tracker
+   ```
+
+2. Copy the example environment files and fill in your own values:
+   ```bash
+   cp .env.example .env
+   cp backend/.env.example backend/.env
+   ```
+
+3. Build and start the stack:
+   ```bash
+   docker compose up --build
+   ```
+
+4. Open the app:
+   - **Frontend:** [http://localhost:8080](http://localhost:8080)
+   - **Backend API:** [http://localhost:3000/api/v1](http://localhost:3000/api/v1)
+
+### Local Development (without Docker)
+
+**Backend**
+```bash
+cd backend
+cargo run
+```
+
+**Frontend**
+```bash
+cd frontend
+pnpm install
+pnpm run dev
+```
+
+## Testing
+
+**Backend**
+```bash
+cd backend
+cargo test
+```
+
+**Frontend**
+```bash
+cd frontend
+pnpm test
+```
+
+## Deployment
+
+The Docker Compose setup here is portable to any server. To run behind a custom domain with HTTPS, put a reverse proxy (e.g. Caddy, Traefik, or nginx + certbot) in front of the `frontend` service on your host — no changes needed to this repo's Docker configuration.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
